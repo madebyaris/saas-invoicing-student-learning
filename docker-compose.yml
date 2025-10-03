@@ -1,0 +1,120 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:18-alpine
+    container_name: invoicing-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: invoicing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./invoicing-backend/migrations:/migrations
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d invoicing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - dev
+      - backend
+      - full
+      - test
+
+  # Go Backend API
+  backend:
+    build:
+      context: ./invoicing-backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: invoicing-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/invoicing?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - PORT=8080
+      - GIN_MODE=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./invoicing-backend:/app
+      - /app/bin
+    working_dir: /app
+    command: ["air", "-c", ".air.toml"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    profiles:
+      - dev
+      - backend
+      - full
+
+  # Migration service for database operations
+  migrate:
+    image: migrate/migrate:v4.16.2
+    container_name: invoicing-migrate
+    volumes:
+      - ./invoicing-backend/migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - migrate
+    entrypoint: ["migrate", "-path", "/migrations", "-database", "postgres://postgres:password@postgres:5432/invoicing?sslmode=disable"]
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: invoicing-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@invoicing.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - dev
+      - full
+      - pgadmin
+
+  # React Frontend (placeholder for future implementation)
+  frontend:
+    build:
+      context: ./invoicing-frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: invoicing-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    volumes:
+      - ./invoicing-frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    profiles:
+      - frontend
+      - full
+
+volumes:
+  postgres_data:
+  pgadmin_data:

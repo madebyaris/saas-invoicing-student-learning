@@ -1,0 +1,300 @@
+---
+globs: "*.go,go.mod,go.sum"
+description: "Go 1.25 Best Practices for SaaS Invoicing Backend"
+---
+
+# Go 1.25 Best Practices - SaaS Invoicing
+
+## 🔥 Go Standards & Conventions
+
+### Project Structure (Based on [invoicing-backend/](mdc:invoicing-backend/))
+```go
+// ✅ GOOD: Clear package organization
+package handlers    // HTTP handlers
+package services    // Business logic
+package models      // Data models
+package utils       // Shared utilities
+
+// ❌ BAD: Mixed responsibilities
+package api         // Too broad, unclear purpose
+```
+
+### Naming Conventions
+```go
+// ✅ GOOD: Clear, descriptive names
+func CreateInvoice(ctx context.Context, req CreateInvoiceRequest) (*Invoice, error)
+type InvoiceService struct { db *gorm.DB }
+var ErrInvoiceNotFound = errors.New("invoice not found")
+
+// ❌ BAD: Abbreviated or unclear names
+func CrtInv(r CIR) (*Inv, error)
+type InvSvc struct { d *gorm.DB }
+var ErrINF = errors.New("not found")
+```
+
+## 🏛️ Architecture Patterns
+
+### Service Layer Pattern (Reference: [internal/services/](mdc:invoicing-backend/internal/services/))
+```go
+// ✅ GOOD: Clean service interface
+type InvoiceService interface {
+    CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error)
+    GetInvoice(ctx context.Context, id string) (*Invoice, error)
+    UpdateInvoice(ctx context.Context, id string, req *UpdateInvoiceRequest) (*Invoice, error)
+}
+
+// Implementation with dependency injection
+type invoiceService struct {
+    db     *gorm.DB
+    logger *slog.Logger
+}
+
+func NewInvoiceService(db *gorm.DB, logger *slog.Logger) InvoiceService {
+    return &invoiceService{db: db, logger: logger}
+}
+```
+
+### Repository Pattern (For Complex Queries)
+```go
+// ✅ GOOD: Separate data access logic
+type InvoiceRepository interface {
+    Create(ctx context.Context, invoice *Invoice) error
+    GetByID(ctx context.Context, id string) (*Invoice, error)
+    GetByUserID(ctx context.Context, userID string, opts *QueryOptions) ([]*Invoice, error)
+}
+```
+
+### Handler Pattern (Reference: [internal/handlers/](mdc:invoicing-backend/internal/handlers/))
+```go
+// ✅ GOOD: Thin handlers, delegate to services
+func (h *InvoiceHandler) CreateInvoice(c *gin.Context) {
+    var req CreateInvoiceRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": "Invalid request"})
+        return
+    }
+
+    invoice, err := h.service.CreateInvoice(c.Request.Context(), &req)
+    if err != nil {
+        h.handleError(c, err)
+        return
+    }
+
+    c.JSON(201, gin.H{"data": invoice})
+}
+```
+
+## 🚀 Performance Optimizations
+
+### Database Operations (GORM Best Practices)
+```go
+// ✅ GOOD: Use transactions for multi-table operations
+func (s *invoiceService) CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error) {
+    return s.db.Transaction(func(tx *gorm.DB) error {
+        // Create invoice
+        invoice := &Invoice{...}
+        if err := tx.Create(invoice).Error; err != nil {
+            return err
+        }
+
+        // Create invoice items
+        for _, item := range req.Items {
+            item.InvoiceID = invoice.ID
+            if err := tx.Create(&item).Error; err != nil {
+                return err
+            }
+        }
+        return nil
+    })
+}
+
+// ✅ GOOD: Use preloading to avoid N+1 queries
+func (s *invoiceService) GetInvoicesWithItems(ctx context.Context, userID string) ([]*Invoice, error) {
+    var invoices []*Invoice
+    err := s.db.Preload("InvoiceItems").Where("user_id = ?", userID).Find(&invoices).Error
+    return invoices, err
+}
+
+// ❌ BAD: N+1 query problem
+func (s *invoiceService) GetInvoicesWithItems(ctx context.Context, userID string) ([]*Invoice, error) {
+    var invoices []*Invoice
+    s.db.Where("user_id = ?", userID).Find(&invoices)
+    
+    for _, invoice := range invoices {
+        s.db.Where("invoice_id = ?", invoice.ID).Find(&invoice.InvoiceItems) // N+1!
+    }
+    return invoices, nil
+}
+```
+
+### Context Usage
+```go
+// ✅ GOOD: Pass context for cancellation and timeouts
+func (s *invoiceService) CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error) {
+    // Use context with database operations
+    return s.db.WithContext(ctx).Create(invoice).Error
+}
+
+// ✅ GOOD: Set timeouts for external calls
+func (s *paymentService) ProcessPayment(ctx context.Context, req *PaymentRequest) error {
+    ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+    defer cancel()
+    
+    // External API call with timeout
+    return s.paymentClient.Charge(ctx, req)
+}
+```
+
+## 🛡️ Error Handling & Security
+
+### Structured Error Handling
+```go
+// ✅ GOOD: Wrap errors with context
+func (s *invoiceService) GetInvoice(ctx context.Context, id string) (*Invoice, error) {
+    var invoice Invoice
+    err := s.db.WithContext(ctx).First(&invoice, "id = ?", id).Error
+    
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, fmt.Errorf("invoice %s: %w", id, ErrInvoiceNotFound)
+    }
+    if err != nil {
+        return nil, fmt.Errorf("failed to get invoice %s: %w", id, err)
+    }
+    
+    return &invoice, nil
+}
+
+// Custom error types for better handling
+type ValidationError struct {
+    Field   string
+    Message string
+}
+
+func (e ValidationError) Error() string {
+    return fmt.Sprintf("validation failed for %s: %s", e.Field, e.Message)
+}
+```
+
+### Input Validation & Security
+```go
+// ✅ GOOD: Validate input at handler level
+type CreateInvoiceRequest struct {
+    ClientID    string                `json:"client_id" validate:"required,uuid"`
+    InvoiceNumber string              `json:"invoice_number" validate:"required,max=50"`
+    Items       []CreateInvoiceItem   `json:"items" validate:"required,min=1,dive"`
+    // Use struct tags for validation
+}
+
+// ✅ GOOD: SQL injection prevention (GORM handles this)
+func (s *invoiceService) GetInvoicesByStatus(ctx context.Context, status string) ([]*Invoice, error) {
+    var invoices []*Invoice
+    // GORM automatically escapes parameters
+    err := s.db.Where("status = ?", status).Find(&invoices).Error
+    return invoices, err
+}
+
+// ❌ BAD: Never use string concatenation for SQL
+func (s *invoiceService) GetInvoicesByStatus(ctx context.Context, status string) ([]*Invoice, error) {
+    query := "SELECT * FROM invoices WHERE status = '" + status + "'" // SQL injection risk!
+    // Don't do this!
+}
+```
+
+## 🧪 Testing Best Practices
+
+### Unit Testing Structure
+```go
+// ✅ GOOD: Table-driven tests
+func TestInvoiceService_CreateInvoice(t *testing.T) {
+    tests := []struct {
+        name    string
+        req     *CreateInvoiceRequest
+        wantErr bool
+        errType error
+    }{
+        {
+            name: "valid invoice creation",
+            req: &CreateInvoiceRequest{
+                ClientID: "valid-uuid",
+                Items:    []CreateInvoiceItem{{Description: "Test", Quantity: 1, UnitPrice: 100}},
+            },
+            wantErr: false,
+        },
+        {
+            name: "missing client ID",
+            req: &CreateInvoiceRequest{
+                Items: []CreateInvoiceItem{{Description: "Test", Quantity: 1, UnitPrice: 100}},
+            },
+            wantErr: true,
+            errType: ValidationError{},
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // Test implementation
+        })
+    }
+}
+```
+
+## 📊 Monitoring & Observability
+
+### Structured Logging
+```go
+// ✅ GOOD: Use structured logging (slog in Go 1.21+)
+func (s *invoiceService) CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error) {
+    s.logger.InfoContext(ctx, "creating invoice",
+        slog.String("client_id", req.ClientID),
+        slog.Int("items_count", len(req.Items)),
+    )
+    
+    invoice, err := s.createInvoiceTransaction(ctx, req)
+    if err != nil {
+        s.logger.ErrorContext(ctx, "failed to create invoice",
+            slog.String("client_id", req.ClientID),
+            slog.String("error", err.Error()),
+        )
+        return nil, err
+    }
+    
+    s.logger.InfoContext(ctx, "invoice created successfully",
+        slog.String("invoice_id", invoice.ID),
+        slog.String("invoice_number", invoice.InvoiceNumber),
+    )
+    
+    return invoice, nil
+}
+```
+
+## 🔧 Go 1.25 Specific Features
+
+### Use Latest Language Features
+```go
+// ✅ GOOD: Use type inference and generics where appropriate
+func Map[T, U any](slice []T, fn func(T) U) []U {
+    result := make([]U, len(slice))
+    for i, v := range slice {
+        result[i] = fn(v)
+    }
+    return result
+}
+
+// Use in invoice processing
+invoiceIDs := Map(invoices, func(inv *Invoice) string { return inv.ID })
+```
+
+### Performance Improvements
+```go
+// ✅ GOOD: Use clear() for slice reuse (Go 1.21+)
+func (s *invoiceService) processInvoices(invoices []Invoice) {
+    var errors []error
+    defer clear(errors) // Clear slice for reuse
+    
+    for _, invoice := range invoices {
+        if err := s.validate(invoice); err != nil {
+            errors = append(errors, err)
+        }
+    }
+}
+```

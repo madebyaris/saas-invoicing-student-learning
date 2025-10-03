@@ -1,0 +1,362 @@
+# ============================================================================
+# SaaS Invoicing - Comprehensive .gitignore
+# ============================================================================
+
+# ============================================================================
+# Go (Backend)
+# ============================================================================
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+invoicing-backend/bin/
+invoicing-backend/tmp/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+coverage.txt
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Build artifacts
+dist/
+build/
+
+# Go vendor directory (if using go mod vendor)
+vendor/
+
+# Go test cache
+.cache/
+
+# Air (hot reload) temporary files
+invoicing-backend/tmp/
+tmp/
+
+# ============================================================================
+# Environment Variables & Secrets
+# ============================================================================
+
+# Environment files (NEVER commit these!)
+.env
+.env.*
+!.env.example
+*.env
+docker.env.local
+.secrets
+
+# Sensitive configuration files
+config.local.yml
+config.local.json
+secrets.yml
+
+# JWT keys and certificates
+*.pem
+*.key
+*.crt
+!*.example.pem
+
+# ============================================================================
+# Database
+# ============================================================================
+
+# Database backups
+backups/*.sql
+backups/*.dump
+backups/*.tar.gz
+*.backup
+
+# Database data directories (if using local dev)
+postgres-data/
+pgdata/
+
+# Database connection files
+.pgpass
+
+# SQLite databases (if used for testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================================
+# Docker
+# ============================================================================
+
+# Docker volumes (data should persist but not be committed)
+docker-volumes/
+.docker/
+
+# Docker Compose override files (local customizations)
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Docker build context files
+.dockerignore.local
+
+# ============================================================================
+# Logs & Temporary Files
+# ============================================================================
+
+# Log files
+*.log
+logs/
+*.log.*
+invoicing-backend/*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Process IDs
+*.pid
+
+# ============================================================================
+# IDE & Editor Files
+# ============================================================================
+
+# VSCode
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json
+!.vscode/launch.json.example
+*.code-workspace
+
+# GoLand / IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ============================================================================
+# Operating System Files
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ============================================================================
+# Frontend (React/Vite) - For future implementation
+# ============================================================================
+
+# Dependencies
+node_modules/
+jspm_packages/
+invoicing-frontend/node_modules/
+
+# Production builds
+invoicing-frontend/dist/
+invoicing-frontend/build/
+
+# Environment variables
+invoicing-frontend/.env.local
+invoicing-frontend/.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Testing
+invoicing-frontend/coverage/
+
+# Vite
+invoicing-frontend/.vite/
+
+# ============================================================================
+# Testing & Coverage
+# ============================================================================
+
+# Test coverage reports
+coverage/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Benchmark results
+benchmarks/
+*.bench
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+
+# CI/CD artifacts
+.github/artifacts/
+.gitlab-ci-local/
+
+# Deployment artifacts
+deploy-artifacts/
+
+# ============================================================================
+# Documentation
+# ============================================================================
+
+# Generated documentation (if using godoc or similar)
+docs/generated/
+site/
+
+# ============================================================================
+# Development Tools
+# ============================================================================
+
+# Air config backup
+.air.toml.backup
+
+# Debug files
+debug
+debug.test
+__debug_bin
+
+# Profiling data
+*.prof
+*.pprof
+cpu.prof
+mem.prof
+block.prof
+mutex.prof
+
+# Migration rollback files (keep .up.sql and .down.sql, ignore generated backups)
+migrations/*.backup
+
+# ============================================================================
+# Project-Specific
+# ============================================================================
+
+# Backup Makefile (you have Makefile.backup and Makefile.simple)
+# Keeping them for now, but you might want to ignore backups later
+# Makefile.backup
+# Makefile.simple
+
+# Spec development artifacts (keep active specs, ignore drafts)
+specs/drafts/
+specs/archive/
+
+# Generated API documentation
+docs/api/generated/
+
+# Sample data (if you don't want to commit test data)
+# seed-data/
+
+# Local development scripts
+scripts/local/
+scripts/*.local.sh
+
+# Performance test results
+perf-results/
+
+# Security scan results
+security-reports/
+
+# ============================================================================
+# Miscellaneous
+# ============================================================================
+
+# Compressed files (usually build artifacts or backups)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+!docs/**/*.zip
+!specs/**/*.zip
+
+# Certificate files (except examples)
+certificates/
+!certificates/README.md
+
+# API keys and tokens (double-check these are in environment files!)
+*-secrets.json
+*-credentials.json
+*.token
+
+# Large files that shouldn't be in Git
+*.dmg
+*.iso
+*.img
+
+# TODO files that are personal notes
+TODO.personal.md
+NOTES.personal.md

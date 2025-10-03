@@ -1,0 +1,355 @@
+---
+alwaysApply: true
+description: "10X Development Workflow and Technical Debt Prevention"
+---
+
+# 10X Development Workflow - SaaS Invoicing
+
+## 🚀 10X Development Principles
+
+### KISS (Keep It Simple, Stupid)
+```go
+// ✅ GOOD: Simple, direct implementation
+func GetInvoice(id string) (*Invoice, error) {
+    var invoice Invoice
+    err := db.First(&invoice, "id = ?", id).Error
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, ErrInvoiceNotFound
+    }
+    return &invoice, err
+}
+
+// ❌ BAD: Over-engineered with unnecessary abstraction
+type InvoiceRetriever interface {
+    RetrieveInvoiceByIdentifier(ctx context.Context, identifier InvoiceIdentifier) (*InvoiceEntity, error)
+}
+type InvoiceIdentifier struct { Value string }
+type InvoiceEntity struct { /* complex wrapper */ }
+```
+
+### DRY (Don't Repeat Yourself)
+```go
+// ✅ GOOD: Shared utility functions in internal/utils/
+func ValidateUUID(id string) error {
+    if _, err := uuid.Parse(id); err != nil {
+        return fmt.Errorf("invalid UUID format: %w", err)
+    }
+    return nil
+}
+
+// ✅ GOOD: Base model with common fields (internal/models/base.go)
+type Base struct {
+    ID        string    `json:"id" gorm:"primarykey;type:uuid;default:gen_random_uuid()"`
+    CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+    UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+    DeletedAt *gorm.DeletedAt `json:"-" gorm:"index"`
+}
+```
+
+### SOLID Principles in Action
+```go
+// ✅ GOOD: Single Responsibility - Each service handles one domain
+type InvoiceService interface {
+    CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error)
+    UpdateInvoice(ctx context.Context, id string, req *UpdateInvoiceRequest) (*Invoice, error)
+    // ... other invoice-related operations only
+}
+
+// ✅ GOOD: Open/Closed - Extensible through interfaces
+type PaymentProcessor interface {
+    ProcessPayment(ctx context.Context, invoice *Invoice) error
+}
+
+type StripeProcessor struct{}
+type PayPalProcessor struct{}
+// Both implement PaymentProcessor without modifying existing code
+```
+
+## 🛠️ Docker-First Development Workflow
+
+### Core Commands (Reference: [Makefile](mdc:Makefile))
+```bash
+# 🚀 Daily development workflow
+make dev          # Start full development stack
+make db-admin     # Open pgAdmin for database inspection
+make test         # Run tests in containers
+make lint         # Code quality checks
+
+# 🗄️ Database operations
+make db-migrate   # Apply latest migrations
+make db-reset     # Fresh database with migrations
+make db-backup    # Create backup before major changes
+
+# 🔧 Development utilities
+make logs         # View service logs
+make shell        # Access backend container
+make clean        # Clean containers and volumes
+```
+
+### Development Environment Setup
+```yaml
+# Reference: docker-compose.yml
+services:
+  postgres:    # Database server (port 5432)
+  backend:     # Go API server (port 8080) 
+  pgadmin:     # Database admin UI (port 5050)
+  migrate:     # Migration service (on-demand)
+```
+
+## 🔍 Technical Debt Prevention
+
+### 🚨 Code Smells to Watch For
+```go
+// ❌ BAD: Long parameter lists (>3 parameters)
+func CreateInvoice(userID, clientID, number, currency string, amount float64, taxRate float64, dueDate time.Time, notes string) error
+
+// ✅ GOOD: Use structs for complex parameters
+type CreateInvoiceRequest struct {
+    UserID    string    `json:"user_id" validate:"required,uuid"`
+    ClientID  string    `json:"client_id" validate:"required,uuid"`
+    Number    string    `json:"number" validate:"required"`
+    Currency  string    `json:"currency" validate:"required,len=3"`
+    Amount    float64   `json:"amount" validate:"gte=0"`
+    TaxRate   float64   `json:"tax_rate" validate:"gte=0,lte=1"`
+    DueDate   time.Time `json:"due_date" validate:"required"`
+    Notes     string    `json:"notes"`
+}
+
+// ❌ BAD: Deep nesting (>3 levels)
+func ProcessInvoice(invoice *Invoice) error {
+    if invoice != nil {
+        if invoice.Status == "draft" {
+            if len(invoice.Items) > 0 {
+                for _, item := range invoice.Items {
+                    if item.Quantity > 0 {
+                        // Too deep!
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ✅ GOOD: Early returns and guard clauses
+func ProcessInvoice(invoice *Invoice) error {
+    if invoice == nil {
+        return ErrInvoiceRequired
+    }
+    if invoice.Status != "draft" {
+        return ErrInvoiceNotDraft
+    }
+    if len(invoice.Items) == 0 {
+        return ErrInvoiceItemsRequired
+    }
+    
+    return s.processInvoiceItems(invoice.Items)
+}
+```
+
+### 🔒 Security Best Practices
+```go
+// ✅ GOOD: Input validation at API boundary
+func (h *InvoiceHandler) CreateInvoice(c *gin.Context) {
+    var req CreateInvoiceRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": "Invalid request format"})
+        return
+    }
+    
+    // Validate business rules
+    if err := h.validator.Validate(req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Ensure user can only create invoices for their own clients
+    userID := c.GetString("user_id") // from JWT middleware
+    if !h.clientService.CanUserAccessClient(userID, req.ClientID) {
+        c.JSON(403, gin.H{"error": "Access denied"})
+        return
+    }
+}
+
+// ✅ GOOD: SQL injection prevention (GORM handles this automatically)
+func (s *invoiceService) GetInvoicesByStatus(status string) ([]*Invoice, error) {
+    var invoices []*Invoice
+    // GORM automatically escapes parameters
+    err := s.db.Where("status = ?", status).Find(&invoices).Error
+    return invoices, err
+}
+```
+
+### ⚡ Performance Best Practices
+```go
+// ✅ GOOD: Efficient database operations
+func (s *invoiceService) GetInvoicesWithItems(userID string) ([]*Invoice, error) {
+    var invoices []*Invoice
+    // Use preloading to avoid N+1 queries
+    err := s.db.Preload("InvoiceItems").
+        Where("user_id = ?", userID).
+        Find(&invoices).Error
+    return invoices, err
+}
+
+// ✅ GOOD: Context with timeouts
+func (s *invoiceService) CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error) {
+    // Set timeout for database operations
+    ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+    defer cancel()
+    
+    return s.db.WithContext(ctx).Create(invoice).Error
+}
+
+// ✅ GOOD: Connection pooling configuration
+func setupDatabase() *gorm.DB {
+    db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    sqlDB, _ := db.DB()
+    
+    sqlDB.SetMaxIdleConns(10)           // Keep connections alive
+    sqlDB.SetMaxOpenConns(100)          // Limit total connections  
+    sqlDB.SetConnMaxLifetime(time.Hour) // Rotate connections
+    
+    return db
+}
+```
+
+## 📋 Quality Assurance Workflow
+
+### Pre-Commit Checklist
+```bash
+# ✅ ALWAYS run before committing
+make lint         # Go formatting and linting
+make test         # Unit and integration tests
+make db-migrate   # Ensure migrations work
+
+# ✅ Check these manually
+- [ ] API documentation updated (docs/api-reference.md)
+- [ ] Error handling implemented
+- [ ] Input validation added
+- [ ] Logs added for debugging
+- [ ] No hardcoded values
+- [ ] Database indexes considered
+```
+
+### Code Review Guidelines
+```go
+// Review checklist for Go code:
+// 1. Error handling - every error checked
+// 2. Context usage - passed to database operations
+// 3. Input validation - at API boundaries
+// 4. Security - no SQL injection, proper authorization
+// 5. Performance - efficient database queries
+// 6. Logging - structured logging for debugging
+// 7. Testing - unit tests included
+```
+
+### Database Change Review
+```sql
+-- Review checklist for migrations:
+-- 1. Rollback script exists (.down.sql)
+-- 2. Indexes added for new columns used in WHERE clauses
+-- 3. No breaking changes to existing data
+-- 4. Performance impact considered
+-- 5. Data migration strategy for existing records
+```
+
+## 📊 Monitoring & Observability
+
+### Structured Logging
+```go
+// ✅ GOOD: Structured logging with context
+func (s *invoiceService) CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error) {
+    logger := s.logger.With(
+        slog.String("operation", "create_invoice"),
+        slog.String("user_id", req.UserID),
+        slog.String("client_id", req.ClientID),
+    )
+    
+    logger.InfoContext(ctx, "starting invoice creation")
+    
+    invoice, err := s.createInvoiceTransaction(ctx, req)
+    if err != nil {
+        logger.ErrorContext(ctx, "invoice creation failed", slog.String("error", err.Error()))
+        return nil, err
+    }
+    
+    logger.InfoContext(ctx, "invoice created successfully", 
+        slog.String("invoice_id", invoice.ID),
+        slog.String("invoice_number", invoice.InvoiceNumber),
+    )
+    
+    return invoice, nil
+}
+```
+
+### Performance Monitoring
+```go
+// ✅ GOOD: Track operation duration
+func (s *invoiceService) CreateInvoice(ctx context.Context, req *CreateInvoiceRequest) (*Invoice, error) {
+    start := time.Now()
+    defer func() {
+        duration := time.Since(start)
+        s.metrics.RecordDuration("invoice_creation", duration)
+    }()
+    
+    // Implementation...
+}
+```
+
+## 🎯 Continuous Improvement
+
+### Regular Health Checks
+```bash
+# Weekly development health check
+make docker-info    # Review Docker setup
+make env-info      # Check environment status
+make status        # Service health status
+
+# Monthly database optimization
+make db-backup     # Backup before optimization
+# Review slow queries in pgAdmin
+# Analyze table sizes and index usage
+# Update database statistics
+```
+
+### Technical Debt Review
+```bash
+# Quarterly technical debt assessment
+# 1. Code complexity analysis
+# 2. Database performance review  
+# 3. Security vulnerability scan
+# 4. Documentation gap analysis
+# 5. Test coverage review
+# 6. Dependencies update check
+```
+
+### Learning & Adaptation
+```
+Monthly retrospective questions:
+1. What development patterns worked well?
+2. Which AI model was most effective for different tasks?
+3. What technical debt accumulated?
+4. How can we improve the development workflow?
+5. What new Go 1.25 features can we adopt?
+```
+
+## 🔄 Deployment Pipeline
+
+### Staging Deployment
+```bash
+# Reference: Makefile deployment commands
+make build-prod        # Build production images
+make deploy-staging    # Deploy to staging environment
+# Run integration tests
+# Performance testing
+# Security scanning
+```
+
+### Production Deployment
+```bash
+make db-backup         # Backup production database
+make deploy-prod       # Deploy to production
+# Monitor application metrics
+# Check error rates
+# Verify database performance
+```

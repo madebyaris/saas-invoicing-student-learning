@@ -1,0 +1,259 @@
+---
+alwaysApply: true
+description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
+---
+
+# AI Model Optimization - SaaS Invoicing Project
+
+## 🧠 AI Model Specialization Strategy
+
+### Sonnet 4 (Claude) - The Architect 🏗️
+**Strengths**: Deep analysis, structured thinking, comprehensive documentation
+
+**Best Use Cases**:
+- **Complex Refactoring**: Large-scale architecture changes across [invoicing-backend/](mdc:invoicing-backend/)
+- **Code Reviews**: Comprehensive analysis of Go code quality and patterns
+- **Database Design**: Schema optimization and migration strategies
+- **Documentation**: Technical specs, API documentation, and architecture decisions
+- **Security Analysis**: Vulnerability assessment and security best practices
+- **Performance Analysis**: Database query optimization and bottleneck identification
+
+**Optimal Prompts for Sonnet 4**:
+```
+"Analyze the entire invoicing service layer for potential improvements..."
+"Review the database schema and suggest normalization opportunities..."
+"Create comprehensive documentation for the authentication flow..."
+"Identify security vulnerabilities in the current API design..."
+```
+
+### Grok 4 - The Innovator ⚡
+**Strengths**: Creative problem-solving, rapid iteration, unconventional solutions
+
+**Best Use Cases**:
+- **Rapid Prototyping**: Quick feature implementation and MVP development
+- **Creative Problem Solving**: Unique approaches to complex business logic
+- **Performance Optimization**: Speed improvements and efficiency gains
+- **API Design**: RESTful endpoint patterns and innovative data structures
+- **Testing Strategies**: Creative test scenarios and edge cases
+- **DevOps Innovation**: Docker optimizations and deployment strategies
+
+**Optimal Prompts for Grok 4**:
+```
+"Design a lightning-fast invoice generation system..."
+"Create an innovative caching strategy for invoice data..."
+"Build a unique API rate limiting solution..."
+"Optimize Docker builds for maximum speed..."
+```
+
+### Supernova - The Precision Expert 🎯
+**Strengths**: Accuracy, reliability, detailed implementation, production-ready code
+
+**Best Use Cases**:
+- **Production Code**: Battle-tested, production-ready implementations
+- **Database Operations**: Complex SQL queries and transaction management
+- **Security Implementation**: JWT authentication, authorization, and validation
+- **Testing & QA**: Comprehensive test coverage and quality assurance
+- **Error Handling**: Robust error management and recovery strategies
+- **Monitoring & Observability**: Logging, metrics, and alerting systems
+
+**Optimal Prompts for Supernova**:
+```
+"Implement production-ready JWT authentication with refresh tokens..."
+"Create comprehensive test suite for invoice creation flow..."
+"Build robust error handling for database transactions..."
+"Design monitoring system for invoice processing pipeline..."
+```
+
+## 🎯 Context-Aware AI Interaction
+
+### Project Context for All AI Models
+
+**Always provide this context when requesting assistance**:
+
+```
+Project: SaaS Invoicing System
+Tech Stack: Go 1.25 + PostgreSQL 18 + Docker + GORM
+Architecture: Clean Monolith with layered services
+Key Files: 
+- API: /docs/api-reference.md
+- Models: /invoicing-backend/internal/models/
+- Services: /invoicing-backend/internal/services/
+- Database: /invoicing-backend/migrations/
+- Docker: /docker-compose.yml, /Makefile
+Current Status: [Brief description of what you're working on]
+```
+
+### Intelligent Task Routing
+
+#### 🏗️ Use Sonnet 4 When:
+- Need to understand the **entire system architecture**
+- Planning **large refactoring efforts**
+- Reviewing **code quality** across multiple files
+- Creating **comprehensive documentation**
+- Analyzing **security implications** of changes
+- Designing **database schema migrations**
+
+#### ⚡ Use Grok 4 When:
+- Need **quick prototypes** or proof of concepts
+- Looking for **creative solutions** to technical challenges
+- Optimizing for **speed and performance**
+- Designing **innovative API patterns**
+- Building **developer tools** and automation
+- Solving **unique business logic** problems
+
+#### 🎯 Use Supernova When:
+- Writing **production-critical code**
+- Implementing **security features**
+- Creating **comprehensive tests**
+- Building **database transactions**
+- Setting up **monitoring and logging**
+- Handling **edge cases and error scenarios**
+
+## 🔄 AI-Driven Development Workflow
+
+### Phase 1: Planning & Analysis (Sonnet 4)
+```
+1. Architecture review and planning
+2. Security analysis and threat modeling
+3. Database design and migration strategy
+4. Comprehensive documentation review
+5. Code quality assessment
+```
+
+### Phase 2: Creative Implementation (Grok 4)
+```
+1. Rapid prototyping of new features
+2. Performance optimization strategies
+3. Innovative solution design
+4. Quick iteration and experimentation
+5. Creative problem-solving approaches
+```
+
+### Phase 3: Production Implementation (Supernova)
+```
+1. Robust, production-ready code
+2. Comprehensive error handling
+3. Security implementation
+4. Testing and quality assurance
+5. Monitoring and observability
+```
+
+## 🛡️ Technical Debt Prevention with AI
+
+### Sonnet 4 - Code Quality Guardian
+```
+// Prompt template for code reviews:
+"Review this Go service for:
+1. SOLID principles adherence
+2. Error handling patterns
+3. Security vulnerabilities
+4. Performance bottlenecks
+5. Code maintainability
+
+Context: [Provide specific service/handler/model file]
+Business Logic: [Explain what the code should accomplish]"
+```
+
+### Grok 4 - Innovation Catalyst
+```
+// Prompt template for creative solutions:
+"The current implementation has [specific problem].
+Find an innovative solution that:
+1. Improves performance by 2x
+2. Reduces code complexity
+3. Maintains backward compatibility
+4. Uses Go 1.25 features effectively
+
+Current code: [paste relevant code]
+Constraints: [list any business/technical constraints]"
+```
+
+### Supernova - Production Hardener
+```
+// Prompt template for production readiness:
+"Make this code production-ready:
+1. Add comprehensive error handling
+2. Implement proper logging
+3. Add input validation
+4. Include necessary tests
+5. Add monitoring hooks
+
+Code: [paste implementation]
+Requirements: [list production requirements]"
+```
+
+## 📊 AI Performance Metrics
+
+### Track AI Effectiveness
+- **Code Quality Score**: Measure before/after AI assistance
+- **Development Speed**: Track feature completion time
+- **Bug Reduction**: Monitor production issues
+- **Test Coverage**: Ensure AI-generated code includes tests
+- **Security Improvements**: Track vulnerability fixes
+
+### AI Feedback Loop
+```go
+// Example: Track AI recommendations that worked well
+type AIRecommendation struct {
+    Model       string    // "sonnet4", "grok4", "supernova"
+    Task        string    // "refactor", "implement", "optimize"
+    Context     string    // File/feature being worked on
+    Suggestion  string    // What the AI recommended
+    Outcome     string    // "implemented", "modified", "rejected"
+    Impact      string    // "positive", "neutral", "negative"
+    CreatedAt   time.Time
+}
+```
+
+## 🚀 Advanced AI Techniques
+
+### Chain-of-Thought for Complex Problems
+```
+For complex features involving multiple components:
+
+1. Sonnet 4: "Analyze the requirements and design the architecture"
+2. Grok 4: "Find the most innovative implementation approach"  
+3. Supernova: "Implement with production-quality code and tests"
+4. Sonnet 4: "Review the final implementation for quality and security"
+```
+
+### Specialized Prompt Engineering
+```
+// Database optimization (Supernova):
+"Optimize this PostgreSQL query for the invoice system:
+- Current query: [paste SQL]
+- Performance requirement: <100ms for 10K+ records
+- Available indexes: [list current indexes]
+- Business logic: [explain what query accomplishes]
+Please provide: optimized query + recommended indexes + EXPLAIN plan"
+
+// Go refactoring (Sonnet 4):
+"Refactor this Go service to follow clean architecture:
+- Current code: [paste service code]
+- Issues: [list specific problems]
+- Requirements: [list business requirements]
+- Constraints: [API compatibility, etc.]
+Please provide: refactored code + migration plan + tests"
+```
+
+## 🎯 Context Engineering
+
+### Maximize AI Effectiveness
+1. **Always include relevant file paths** from the project
+2. **Provide business context** for technical decisions
+3. **Specify constraints** (performance, compatibility, security)
+4. **Include error examples** when debugging
+5. **Reference existing patterns** in the codebase
+
+### Sample Context Block
+```
+Working on: Invoice creation API endpoint
+Files involved: 
+- /invoicing-backend/internal/handlers/invoice.go
+- /invoicing-backend/internal/services/invoice.go  
+- /invoicing-backend/internal/models/invoice.go
+Current issue: [describe specific problem]
+Business requirement: [explain what needs to be achieved]
+Technical constraints: [list any limitations]
+Performance target: [specify requirements]
+```

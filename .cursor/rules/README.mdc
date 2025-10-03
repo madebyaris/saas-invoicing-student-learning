@@ -1,0 +1,128 @@
+---
+alwaysApply: true
+description: "Cursor Rules System Overview and Quick Reference"
+---
+
+# 🎯 Cursor Rules - SaaS Invoicing Project
+
+## 📚 Rules Overview
+
+This project uses **5 specialized Cursor rules** designed for 10X development with AI assistance:
+
+### 🏗️ [Project Architecture](mdc:.cursor/rules/project-architecture.mdc)
+- **Always Applied**: Core project structure and standards
+- **Focus**: Clean monolith architecture, SOLID principles, quality gates
+- **Key Concepts**: Docker-first development, API-driven design, technical debt prevention
+
+### 🐹 [Go Best Practices](mdc:.cursor/rules/golang-best-practices.mdc) 
+- **Applied to**: `*.go`, `go.mod`, `go.sum` files
+- **Focus**: Go 1.25 specific patterns, performance optimization, security
+- **Key Concepts**: Service layer patterns, error handling, testing strategies
+
+### 🗄️ [Database Best Practices](mdc:.cursor/rules/database-best-practices.mdc)
+- **Applied to**: `*.sql`, migration files
+- **Focus**: PostgreSQL optimization, query performance, data integrity
+- **Key Concepts**: Indexing strategies, transaction management, security patterns
+
+### 🧠 [AI Optimization](mcp:.cursor/rules/ai-optimization.mdc)
+- **Always Applied**: Maximizes AI model effectiveness
+- **Focus**: Sonnet 4, Grok 4, and Supernova specialization
+- **Key Concepts**: Task routing, context engineering, prompt optimization
+
+### 🚀 [Development Workflow](mdc:.cursor/rules/development-workflow.mdc)
+- **Always Applied**: 10X development practices and technical debt prevention
+- **Focus**: KISS/DRY principles, quality assurance, continuous improvement
+- **Key Concepts**: Docker workflows, monitoring, deployment strategies
+
+## 🎯 Quick AI Task Routing
+
+### 🏗️ Use **Sonnet 4** for:
+- Architecture reviews and planning
+- Comprehensive code analysis
+- Security assessments
+- Technical documentation
+- Complex refactoring strategies
+
+### ⚡ Use **Grok 4** for:
+- Rapid prototyping and MVPs
+- Creative problem solving
+- Performance optimizations
+- Innovative API designs
+- Quick iterations and experiments
+
+### 🎯 Use **Supernova** for:
+- Production-ready implementations
+- Security feature development
+- Comprehensive testing strategies
+- Database transaction management
+- Error handling and edge cases
+
+## 🚀 Essential Commands
+
+```bash
+# 🔥 Daily Development
+make dev          # Start full stack (Go + PostgreSQL + pgAdmin)
+make db-admin     # Open database GUI (localhost:5050)
+make test         # Run tests in containers
+make lint         # Code quality checks
+
+# 🗄️ Database Operations  
+make db-migrate   # Apply latest migrations
+make db-reset     # Fresh database setup
+make db-backup    # Create backup before changes
+
+# 🛠️ Development Utilities
+make logs         # View service logs
+make shell        # Access backend container
+make help         # Show all available commands
+```
+
+## 📊 Project Status Dashboard
+
+### ✅ Current Capabilities
+- **Backend API**: Go 1.25 with hot reload ([localhost:8080](http://localhost:8080))
+- **Database**: PostgreSQL 18 with full schema ([localhost:5432](http://localhost:5432))
+- **Admin UI**: pgAdmin 4 for database management ([localhost:5050](http://localhost:5050))
+- **API Docs**: Comprehensive reference ([docs/api-reference.md](mdc:docs/api-reference.md))
+- **Docker**: Production-ready multi-stage builds
+- **Testing**: Containerized test environment
+
+### 🎯 Development Focus Areas
+1. **Performance**: Database query optimization and API response times
+2. **Security**: JWT authentication, input validation, SQL injection prevention
+3. **Quality**: Comprehensive testing, error handling, logging
+4. **Scalability**: Connection pooling, caching strategies, monitoring
+5. **Documentation**: API docs, code comments, architectural decisions
+
+## 🛡️ Quality Standards
+
+### Code Quality Gates
+- ✅ **Compiles** without warnings
+- ✅ **Tests pass** in Docker environment
+- ✅ **Linting** passes with no issues
+- ✅ **Security** scan shows no vulnerabilities
+- ✅ **Documentation** updated for public APIs
+
+### Performance Targets
+- 🎯 **API Response**: <200ms for 95th percentile
+- 🎯 **Database Queries**: <100ms for complex joins
+- 🎯 **Container Startup**: <30s for full stack
+- 🎯 **Memory Usage**: <512MB for backend container
+
+## 🔄 Continuous Improvement
+
+### Weekly Reviews
+- Database performance analysis via pgAdmin
+- Code quality metrics and technical debt assessment
+- AI assistance effectiveness and optimization opportunities
+- Development workflow improvements and automation
+
+### Monthly Upgrades
+- Go version updates and new feature adoption
+- Database schema optimizations and cleanup
+- Security vulnerability patches and improvements
+- Documentation updates and knowledge sharing
+
+---
+
+**🎉 Ready for 10X Development!** Use these rules to maximize productivity while maintaining code quality and security standards.

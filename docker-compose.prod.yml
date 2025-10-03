@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_secure_prod_password}
+    volumes:
+      - /opt/invoicing/postgres:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - invoicing-network
+
+  backend:
+    image: your-registry/invoicing-backend:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=8080
+      - GIN_MODE=release
+    restart: always
+    networks:
+      - invoicing-network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  nginx:
+    image: nginx:alpine
+    container_name: invoicing-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - invoicing-network
+
+networks:
+  invoicing-network:
+    driver: bridge

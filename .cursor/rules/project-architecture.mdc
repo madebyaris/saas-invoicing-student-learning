@@ -1,0 +1,120 @@
+---
+alwaysApply: true
+description: "SaaS Invoicing Project Architecture & 10X Development Standards"
+---
+
+# SaaS Invoicing - Project Architecture & Standards
+
+## 🏗️ Project Structure (Clean Monolith)
+
+The project follows a **Clean Monolith** architecture with clear separation of concerns:
+
+### Backend Structure ([invoicing-backend/](mdc:invoicing-backend/))
+```
+invoicing-backend/
+├── cmd/server/           # Application entry points (main.go)
+├── internal/             # Private application code
+│   ├── config/          # Configuration management
+│   ├── database/        # Database connection & migrations
+│   ├── handlers/        # HTTP handlers (controllers)
+│   ├── middleware/      # HTTP middleware
+│   ├── models/          # Domain models (GORM)
+│   ├── services/        # Business logic layer
+│   └── utils/           # Shared utilities
+├── migrations/          # Database migrations
+└── scripts/            # Deployment & maintenance scripts
+```
+
+### Key Files
+- **Entry Point**: [cmd/server/main.go](mdc:invoicing-backend/cmd/server/main.go)
+- **Database Models**: [internal/models/](mdc:invoicing-backend/internal/models/)
+- **Business Logic**: [internal/services/](mdc:invoicing-backend/internal/services/)
+- **API Documentation**: [docs/api-reference.md](mdc:docs/api-reference.md)
+- **Docker Config**: [docker-compose.yml](mdc:docker-compose.yml)
+- **Build System**: [Makefile](mdc:Makefile)
+
+## 🚀 10X Development Principles
+
+### KISS (Keep It Simple, Stupid)
+- **Single Responsibility**: Each function/struct has one clear purpose
+- **Minimal Dependencies**: Avoid over-engineering and complex abstractions
+- **Clear Naming**: Functions and variables are self-documenting
+- **Direct Solutions**: Choose the simplest approach that works
+
+### DRY (Don't Repeat Yourself)
+- **Shared Utilities**: Common functions in [internal/utils/](mdc:invoicing-backend/internal/utils/)
+- **Reusable Models**: Base model patterns in [internal/models/base.go](mdc:invoicing-backend/internal/models/base.go)
+- **Consistent Patterns**: Same structure for all CRUD operations
+- **Template Responses**: Standardized API response formats
+
+### SOLID Principles
+- **Single Responsibility**: Services handle one domain area
+- **Open/Closed**: Use interfaces for extensibility
+- **Liskov Substitution**: Proper interface implementations
+- **Interface Segregation**: Small, focused interfaces
+- **Dependency Inversion**: Depend on abstractions, not concretions
+
+## 🎯 AI Model Optimization
+
+### For Sonnet 4 (Claude) - Analytical & Structured
+- **Complex Refactoring**: Use for large-scale architecture changes
+- **Code Reviews**: Comprehensive analysis of code quality
+- **Documentation**: Generate detailed technical documentation
+- **Error Analysis**: Deep debugging and root cause analysis
+
+### For Grok 4 - Fast & Creative
+- **Rapid Prototyping**: Quick feature implementation and iteration
+- **Problem Solving**: Creative solutions to complex challenges
+- **Performance Optimization**: Speed and efficiency improvements
+- **API Design**: RESTful endpoint design and patterns
+
+### For Supernova - Precision & Accuracy
+- **Database Operations**: Schema design and query optimization
+- **Security Implementation**: Authentication and authorization
+- **Testing Strategies**: Comprehensive test coverage
+- **Production Deployment**: DevOps and infrastructure code
+
+## 📋 Development Workflow
+
+### 1. Always Use Docker-First Development
+```bash
+make dev          # Full development stack
+make db-admin     # pgAdmin for database management
+make test         # Run tests in containers
+```
+
+### 2. Database-First Design
+- Start with [migrations/](mdc:invoicing-backend/migrations/)
+- Define models in [internal/models/](mdc:invoicing-backend/internal/models/)
+- Implement services with proper transactions
+
+### 3. API-Driven Development
+- Reference [docs/api-reference.md](mdc:docs/api-reference.md)
+- Follow RESTful conventions
+- Implement proper error handling
+
+## 🛡️ Quality Gates
+
+### Before Any Commit
+1. **Code compiles** without warnings
+2. **Tests pass** in containerized environment
+3. **No security vulnerabilities** (basic check)
+4. **Documentation updated** for public APIs
+5. **Migration tested** if database changes
+
+### Technical Debt Prevention
+- **Code Reviews**: Every change requires review
+- **Automated Testing**: Unit + integration tests
+- **Performance Monitoring**: Database query analysis
+- **Security Scanning**: Regular vulnerability assessment
+- **Documentation**: Keep API docs synchronized
+
+## 🎪 Context Awareness Rules
+
+When working on this project, always consider:
+- **Database Impact**: How changes affect PostgreSQL schema
+- **API Compatibility**: Backward compatibility for existing endpoints  
+- **Container Deployment**: Docker-first development approach
+- **Performance**: Database queries and API response times
+- **Security**: JWT authentication and input validation
+- **Monitoring**: Logging and error tracking capabilities

@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Invoicing SaaS PostgreSQL",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "invoicing",
+      "Username": "postgres",
+      "Password": "password",
+      "SSLMode": "prefer",
+      "Comment": "Invoicing SaaS development database"
+    }
+  }
+}

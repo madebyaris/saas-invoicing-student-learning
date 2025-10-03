@@ -1,0 +1,328 @@
+---
+globs: "*.sql,**/migrations/**"
+description: "PostgreSQL Database Best Practices for SaaS Invoicing"
+---
+
+# PostgreSQL Database Best Practices - SaaS Invoicing
+
+## 🗄️ Database Architecture (Reference: [migrations/](mdc:invoicing-backend/migrations/))
+
+### Current Schema Overview
+- **Users**: Authentication and user management
+- **Clients**: Customer information
+- **Invoices**: Invoice headers with business logic
+- **Invoice Items**: Line items with proper relationships
+
+### Migration Strategy
+```sql
+-- ✅ GOOD: Incremental migrations with rollback support
+-- File: 005_add_deleted_at_to_invoice_items.up.sql
+ALTER TABLE invoice_items ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE;
+CREATE INDEX idx_invoice_items_deleted_at ON invoice_items(deleted_at);
+
+-- File: 005_add_deleted_at_to_invoice_items.down.sql
+DROP INDEX IF EXISTS idx_invoice_items_deleted_at;
+ALTER TABLE invoice_items DROP COLUMN IF EXISTS deleted_at;
+```
+
+## 🚀 Performance Optimization
+
+### Indexing Strategy
+```sql
+-- ✅ GOOD: Strategic indexes for common queries
+-- Primary key indexes (automatic)
+-- Foreign key indexes for joins
+CREATE INDEX idx_invoices_user_id ON invoices(user_id);
+CREATE INDEX idx_invoices_client_id ON invoices(client_id);
+CREATE INDEX idx_invoice_items_invoice_id ON invoice_items(invoice_id);
+
+-- Composite indexes for complex queries
+CREATE INDEX idx_invoices_user_status ON invoices(user_id, status);
+CREATE INDEX idx_invoices_due_date_status ON invoices(due_date, status) WHERE status != 'paid';
+
+-- ❌ BAD: Too many indexes can slow down writes
+-- Don't create indexes on every column
+```
+
+### Query Optimization Patterns
+```sql
+-- ✅ GOOD: Efficient pagination with LIMIT/OFFSET
+SELECT i.*, c.name as client_name 
+FROM invoices i 
+JOIN clients c ON i.client_id = c.id 
+WHERE i.user_id = $1 
+ORDER BY i.created_at DESC 
+LIMIT 10 OFFSET $2;
+
+-- ✅ GOOD: Use CTEs for complex aggregations
+WITH invoice_totals AS (
+    SELECT 
+        i.id,
+        i.invoice_number,
+        SUM(ii.total_price) as calculated_total
+    FROM invoices i
+    JOIN invoice_items ii ON i.id = ii.invoice_id
+    WHERE i.user_id = $1
+    GROUP BY i.id, i.invoice_number
+)
+SELECT * FROM invoice_totals WHERE calculated_total > $2;
+
+-- ❌ BAD: N+1 queries in application code
+-- SELECT * FROM invoices WHERE user_id = $1;
+-- Then for each invoice: SELECT * FROM invoice_items WHERE invoice_id = $invoice_id;
+```
+
+### Transaction Best Practices
+```sql
+-- ✅ GOOD: Use transactions for data consistency
+BEGIN;
+    INSERT INTO invoices (id, user_id, client_id, ...) VALUES (...);
+    INSERT INTO invoice_items (invoice_id, description, ...) VALUES (...);
+    UPDATE clients SET last_invoice_date = NOW() WHERE id = $client_id;
+COMMIT;
+
+-- ✅ GOOD: Set appropriate isolation levels
+BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+-- Most operations should use READ COMMITTED (PostgreSQL default)
+
+-- Use SERIALIZABLE only when necessary for critical business logic
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+-- Handle invoice numbering conflicts
+```
+
+## 🔒 Security & Data Integrity
+
+### Constraints & Validation
+```sql
+-- ✅ GOOD: Database-level constraints
+CREATE TABLE invoices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+    invoice_number VARCHAR(50) NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (total_amount >= 0),
+    tax_rate DECIMAL(5,4) DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 1),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- Business rules at database level
+    CONSTRAINT valid_dates CHECK (due_date >= issue_date),
+    CONSTRAINT unique_invoice_number_per_user UNIQUE (user_id, invoice_number)
+);
+
+-- ✅ GOOD: Use ENUM types for controlled values
+CREATE TYPE invoice_status AS ENUM ('draft', 'sent', 'paid', 'overdue', 'cancelled');
+```
+
+### Row Level Security (RLS) for Multi-tenancy
+```sql
+-- ✅ GOOD: Enable RLS for data isolation
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can only access their own invoices
+CREATE POLICY invoice_access_policy ON invoices
+    FOR ALL TO authenticated_users
+    USING (user_id = current_setting('app.current_user_id')::UUID);
+
+-- Policy: Users can only access clients they own
+CREATE POLICY client_access_policy ON clients
+    FOR ALL TO authenticated_users
+    USING (user_id = current_setting('app.current_user_id')::UUID);
+```
+
+## 📊 Data Analytics & Reporting
+
+### Efficient Aggregation Queries
+```sql
+-- ✅ GOOD: Monthly revenue report with proper indexing
+SELECT 
+    DATE_TRUNC('month', issue_date) as month,
+    COUNT(*) as invoice_count,
+    SUM(total_amount) as total_revenue,
+    AVG(total_amount) as average_invoice
+FROM invoices 
+WHERE user_id = $1 
+    AND issue_date >= $2 
+    AND status = 'paid'
+GROUP BY DATE_TRUNC('month', issue_date)
+ORDER BY month DESC;
+
+-- ✅ GOOD: Top clients analysis
+SELECT 
+    c.name,
+    COUNT(i.id) as invoice_count,
+    SUM(i.total_amount) as total_spent,
+    MAX(i.issue_date) as last_invoice_date
+FROM clients c
+JOIN invoices i ON c.id = i.client_id
+WHERE c.user_id = $1
+GROUP BY c.id, c.name
+ORDER BY total_spent DESC
+LIMIT 10;
+```
+
+### Materialized Views for Complex Reports
+```sql
+-- ✅ GOOD: Use materialized views for expensive calculations
+CREATE MATERIALIZED VIEW user_invoice_summary AS
+SELECT 
+    user_id,
+    COUNT(*) as total_invoices,
+    SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as paid_amount,
+    SUM(CASE WHEN status = 'overdue' THEN total_amount ELSE 0 END) as overdue_amount,
+    AVG(total_amount) as average_invoice_amount
+FROM invoices
+GROUP BY user_id;
+
+-- Create index on materialized view
+CREATE INDEX idx_user_invoice_summary_user_id ON user_invoice_summary(user_id);
+
+-- Refresh strategy (can be automated)
+REFRESH MATERIALIZED VIEW CONCURRENTLY user_invoice_summary;
+```
+
+## 🔧 Database Maintenance & Monitoring
+
+### Performance Monitoring Queries
+```sql
+-- ✅ GOOD: Monitor slow queries
+SELECT 
+    query,
+    calls,
+    total_time,
+    mean_time,
+    stddev_time
+FROM pg_stat_statements
+WHERE mean_time > 100  -- queries taking more than 100ms
+ORDER BY mean_time DESC;
+
+-- ✅ GOOD: Monitor table sizes and growth
+SELECT 
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
+    pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY size_bytes DESC;
+
+-- ✅ GOOD: Index usage analysis
+SELECT 
+    schemaname,
+    tablename,
+    indexname,
+    idx_scan,
+    idx_tup_read,
+    idx_tup_fetch
+FROM pg_stat_user_indexes
+ORDER BY idx_scan DESC;
+```
+
+### Backup & Recovery Strategy
+```sql
+-- ✅ GOOD: Regular backup commands (via cron)
+-- Full backup
+pg_dump -h localhost -U postgres -d invoicing > backup_$(date +%Y%m%d_%H%M%S).sql
+
+-- Schema-only backup
+pg_dump -h localhost -U postgres -d invoicing --schema-only > schema_backup.sql
+
+-- Point-in-time recovery setup
+-- Enable WAL archiving in postgresql.conf:
+-- wal_level = replica
+-- archive_mode = on
+-- archive_command = 'cp %p /path/to/archive/%f'
+```
+
+## 🎯 Data Quality & Validation
+
+### Triggers for Business Logic
+```sql
+-- ✅ GOOD: Automatic total calculation trigger
+CREATE OR REPLACE FUNCTION update_invoice_total()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE invoices 
+    SET total_amount = (
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM invoice_items
+        WHERE invoice_id = NEW.invoice_id
+    )
+    WHERE id = NEW.invoice_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_invoice_total
+    AFTER INSERT OR UPDATE OR DELETE ON invoice_items
+    FOR EACH ROW
+    EXECUTE FUNCTION update_invoice_total();
+```
+
+### Data Validation Functions
+```sql
+-- ✅ GOOD: Custom validation functions
+CREATE OR REPLACE FUNCTION validate_invoice_data()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Validate invoice number format
+    IF NEW.invoice_number !~ '^INV-[0-9]{8}$' THEN
+        RAISE EXCEPTION 'Invalid invoice number format. Expected: INV-XXXXXXXX';
+    END IF;
+    
+    -- Validate date logic
+    IF NEW.due_date < NEW.issue_date THEN
+        RAISE EXCEPTION 'Due date cannot be before issue date';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER validate_invoice_before_insert
+    BEFORE INSERT OR UPDATE ON invoices
+    FOR EACH ROW
+    EXECUTE FUNCTION validate_invoice_data();
+```
+
+## 🚨 Technical Debt Prevention
+
+### Database Schema Evolution
+```sql
+-- ✅ GOOD: Safe schema changes
+-- 1. Add new column as nullable first
+ALTER TABLE invoices ADD COLUMN payment_method VARCHAR(50);
+
+-- 2. Populate data for existing rows
+UPDATE invoices SET payment_method = 'unknown' WHERE payment_method IS NULL;
+
+-- 3. Add NOT NULL constraint after data population
+ALTER TABLE invoices ALTER COLUMN payment_method SET NOT NULL;
+
+-- ❌ BAD: Adding NOT NULL column without default
+-- ALTER TABLE invoices ADD COLUMN payment_method VARCHAR(50) NOT NULL;
+-- This will fail if table has existing data
+```
+
+### Connection Pool Optimization
+```go
+// ✅ GOOD: Proper connection pool settings in Go
+func setupDatabase() *gorm.DB {
+    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        log.Fatal("Failed to connect to database:", err)
+    }
+    
+    sqlDB, err := db.DB()
+    if err != nil {
+        log.Fatal("Failed to get underlying sql.DB:", err)
+    }
+    
+    // Connection pool settings
+    sqlDB.SetMaxIdleConns(10)           // Minimum connections
+    sqlDB.SetMaxOpenConns(100)          // Maximum connections
+    sqlDB.SetConnMaxLifetime(time.Hour) // Connection lifetime
+    
+    return db
+}
+```
