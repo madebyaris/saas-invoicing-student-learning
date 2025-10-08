@@ -1,12 +1,13 @@
 # Invoicing SaaS - Docker-First Development Makefile
 # All commands run in Docker containers for consistent development environment
 
-.PHONY: help setup dev dev-backend dev-watch logs shell status clean
+.PHONY: help setup dev dev-backend dev-frontend dev-full dev-watch logs logs-backend logs-frontend shell shell-frontend status clean
 .PHONY: db-reset db-migrate db-seed db-backup db-restore db-status db-inspect db-shell db-tables db-perf
 .PHONY: test test-watch test-coverage test-integration test-rbac lint format security-check deps-check
-.PHONY: build-prod deploy-staging deploy-prod health-check api-test
+.PHONY: build-prod build-frontend deploy-staging deploy-prod deploy-test health-check api-test frontend-test
 .PHONY: project-status quick-debug code-stats git-status
-.PHONY: seed-full seed-organizations seed-rbac-test
+.PHONY: seed-full seed-organizations seed-rbac-test seed-demo
+.PHONY: stop restart rebuild
 
 # Default target
 help:
@@ -14,59 +15,61 @@ help:
 	@echo ""
 	@echo "🚀 Quick Start:"
 	@echo "  make setup           One-command setup (Docker only)"
-	@echo "  make dev             Start full development stack"
-	@echo "  make dev-backend     Start backend services only"
+	@echo "  make dev             🔥 Start full stack with HOT RELOAD (frontend + backend)"
+	@echo "  make dev-backend     Start backend services only (API + DB)"
+	@echo "  make dev-frontend    Start frontend only (React + Vite)"
+	@echo "  make stop            Stop all running services"
+	@echo "  make restart         Restart all services"
 	@echo "  make project-status  📊 Show complete project overview"
 	@echo ""
 	@echo "📋 Development Commands:"
-	@echo "  make dev-watch       Development with hot reload (default)"
 	@echo "  make logs            View all service logs"
+	@echo "  make logs-backend    View backend logs only"
+	@echo "  make logs-frontend   View frontend logs only"
 	@echo "  make shell           Access backend container shell"
+	@echo "  make shell-frontend  Access frontend container shell"
 	@echo "  make status          Show service status"
 	@echo "  make clean           Clean containers and volumes"
+	@echo "  make rebuild         Rebuild all images from scratch"
 	@echo "  make quick-debug     🔍 Quick debugging helper"
 	@echo ""
 	@echo "🗄️  Database Commands:"
 	@echo "  make db-reset        Reset database with fresh migrations"
 	@echo "  make db-migrate      Run database migrations"
 	@echo "  make db-status       📊 Show migration status"
-	@echo "  make db-seed         Seed database with basic test data"
-	@echo "  make seed-full       🌱 Seed with comprehensive demo data"
+	@echo "  make seed-demo       🌱 Seed with demo data + test user"
 	@echo "  make db-backup       Backup database to file"
-	@echo "  make db-restore      Restore database from backup"
 	@echo "  make db-admin        Start pgAdmin (web UI at http://localhost:5050)"
 	@echo "  make db-shell        🐚 Access PostgreSQL shell"
 	@echo "  make db-tables       📋 List all database tables"
-	@echo "  make db-inspect      🔍 Show database schema details"
-	@echo "  make db-perf         ⚡ Database performance analysis"
 	@echo ""
 	@echo "🧪 Testing & Quality:"
-	@echo "  make test            Run tests in container"
-	@echo "  make test-watch      Run tests with watch mode"
+	@echo "  make test            Run backend tests"
 	@echo "  make test-coverage   📊 Run tests with coverage report"
-	@echo "  make test-integration Run integration tests"
-	@echo "  make test-rbac       🔐 Test RBAC permissions"
-	@echo "  make lint            Run linting in container"
-	@echo "  make format          🎨 Format Go code"
-	@echo "  make security-check  🔒 Run security vulnerability scan"
-	@echo "  make deps-check      📦 Check dependencies for updates"
-	@echo ""
-	@echo "🔧 Code Quality:"
-	@echo "  make code-stats      📈 Show code statistics"
-	@echo "  make git-status      📊 Enhanced git status"
-	@echo ""
-	@echo "🌐 API Testing:"
+	@echo "  make frontend-test   Run frontend tests"
+	@echo "  make lint            Run linting"
+	@echo "  make format          🎨 Format code"
 	@echo "  make health-check    ✅ Check API health"
 	@echo "  make api-test        🧪 Test API endpoints"
 	@echo ""
-	@echo "🚀 Production:"
-	@echo "  make build-prod      Build production images"
+	@echo "🚀 Production & Deployment:"
+	@echo "  make build-prod      Build production images (backend + frontend)"
+	@echo "  make build-frontend  Build frontend production image"
+	@echo "  make deploy-test     Deploy to test environment"
 	@echo "  make deploy-staging  Deploy to staging"
 	@echo "  make deploy-prod     Deploy to production"
 	@echo ""
+	@echo "📍 Service URLs:"
+	@echo "  Frontend:  http://localhost:3000  (dev with hot reload)"
+	@echo "  Backend:   http://localhost:8080  (API with hot reload)"
+	@echo "  pgAdmin:   http://localhost:5050  (database UI)"
+	@echo ""
+	@echo "🔑 Test Credentials:"
+	@echo "  Email:     admin@invoicing.com"
+	@echo "  Password:  password123"
+	@echo ""
 	@echo "💡 Requirements: Docker and Docker Compose V2"
 	@echo "📖 All services run in containers - no local dependencies needed!"
-	@echo "🆘 Run 'make project-status' for a complete overview"
 
 # =============================================================================
 # SETUP & QUICK START
@@ -102,33 +105,96 @@ setup:
 # DEVELOPMENT COMMANDS
 # =============================================================================
 
-# Start full development stack (backend + database)
+# Start full development stack (frontend + backend + database) with hot reload
 dev:
-	@echo "🚀 Starting full development stack..."
-	@docker compose --profile dev up --build
+	@echo "🚀 Starting full development stack with HOT RELOAD..."
+	@echo ""
+	@echo "📦 Services starting:"
+	@echo "  - PostgreSQL (database)"
+	@echo "  - Go Backend API (hot reload with Air)"
+	@echo "  - React Frontend (hot reload with Vite)"
+	@echo ""
+	@docker compose --profile dev up
+	@echo ""
+	@echo "✅ Services started!"
+	@echo "  Frontend: http://localhost:3000"
+	@echo "  Backend:  http://localhost:8080"
+	@echo "  Login:    admin@invoicing.com / password123"
+
+# Start full stack in detached mode
+dev-detached:
+	@echo "🚀 Starting full stack in background..."
+	@docker compose --profile dev up -d
+	@echo "✅ Services started in background"
+	@echo "  Frontend: http://localhost:3000"
+	@echo "  Backend:  http://localhost:8080"
+	@echo "  Use 'make logs' to view logs"
 
 # Start backend services only (database + API)
 dev-backend:
 	@echo "🚀 Starting backend services (PostgreSQL + API)..."
-	@docker compose --profile backend up --build
+	@docker compose --profile backend up
 
-# Development with hot reload (default mode)
-dev-watch: dev
+# Start frontend only (requires backend running)
+dev-frontend:
+	@echo "🚀 Starting frontend development server..."
+	@echo "⚠️  Make sure backend is running: make dev-backend"
+	@docker compose up frontend
+
+# Start full stack (all services)
+dev-full:
+	@echo "🚀 Starting complete stack (frontend + backend + pgAdmin)..."
+	@docker compose --profile full up
+
+# Stop all services
+stop:
+	@echo "🛑 Stopping all services..."
+	@docker compose --profile dev down
+	@docker compose --profile full down
+	@echo "✅ All services stopped"
+
+# Restart all services
+restart:
+	@echo "🔄 Restarting all services..."
+	@make stop
+	@sleep 2
+	@make dev-detached
+	@echo "✅ Services restarted"
 
 # View logs from all services
 logs:
 	@echo "📋 Viewing service logs (Ctrl+C to exit)..."
 	@docker compose --profile dev logs -f
 
+# View backend logs only
+logs-backend:
+	@echo "📋 Viewing backend logs (Ctrl+C to exit)..."
+	@docker compose logs -f backend
+
+# View frontend logs only
+logs-frontend:
+	@echo "📋 Viewing frontend logs (Ctrl+C to exit)..."
+	@docker compose logs -f frontend
+
 # Access backend container shell
 shell:
 	@echo "🐚 Accessing backend container shell..."
 	@docker compose exec backend sh
 
+# Access frontend container shell
+shell-frontend:
+	@echo "🐚 Accessing frontend container shell..."
+	@docker compose exec frontend sh
+
 # Show service status
 status:
 	@echo "📊 Service Status:"
 	@docker compose --profile dev ps
+	@echo ""
+	@echo "🌐 Service URLs:"
+	@curl -s http://localhost:3000 > /dev/null && echo "  ✅ Frontend: http://localhost:3000" || echo "  ❌ Frontend: Not running"
+	@curl -s http://localhost:8080/health > /dev/null && echo "  ✅ Backend:  http://localhost:8080" || echo "  ❌ Backend:  Not running"
+	@curl -s http://localhost:5050 > /dev/null && echo "  ✅ pgAdmin:  http://localhost:5050" || echo "  ⚠️  pgAdmin:  Not running"
 
 # Clean containers and volumes
 clean:
@@ -160,14 +226,26 @@ db-migrate:
 	@docker compose --profile backend --profile migrate run --rm migrate up
 	@echo "✅ Migrations complete"
 
-# Seed database with test data
-db-seed:
-	@echo "🌱 Seeding database with test data..."
-	@docker compose exec postgres psql -U postgres -d invoicing -c "\
-		INSERT INTO users (email, password_hash, first_name, last_name, role) \
-		VALUES ('admin@invoicing.com', '\$$2a\$$10\$$rQ8K8O6TlOKvnK8QfNlqUeJ1J1J1J1J1J1J1J1J1J1J1J1J1J1J1J1', 'Admin', 'User', 'admin') \
-		ON CONFLICT (email) DO NOTHING;"
-	@echo "✅ Test data seeded"
+# Seed database with demo user for testing
+seed-demo:
+	@echo "🌱 Seeding database with demo user..."
+	@echo ""
+	@echo "Creating test user account..."
+	@curl -s -X POST http://localhost:8080/api/auth/register \
+		-H "Content-Type: application/json" \
+		-d '{"email":"admin@invoicing.com","password":"password123","first_name":"Admin","last_name":"User"}' \
+		> /dev/null 2>&1 || echo "User may already exist"
+	@echo ""
+	@echo "✅ Demo data seeded successfully!"
+	@echo ""
+	@echo "🔑 Test Credentials:"
+	@echo "  Email:    admin@invoicing.com"
+	@echo "  Password: password123"
+	@echo ""
+	@echo "🌐 Login at: http://localhost:3000/login"
+
+# Legacy seed command
+db-seed: seed-demo
 
 # Backup database to file
 db-backup:
@@ -434,28 +512,116 @@ deps-check:
 	@echo "💡 Run 'go get -u ./...' to update dependencies"
 
 # =============================================================================
-# PRODUCTION COMMANDS
+# PRODUCTION & DEPLOYMENT COMMANDS
 # =============================================================================
 
-# Build production images
+# Build all production images (backend + frontend)
 build-prod:
 	@echo "🏗️  Building production images..."
-	@docker compose -f docker-compose.prod.yml build
-	@echo "✅ Production images built"
+	@echo ""
+	@echo "📦 Building backend production image..."
+	@docker compose -f docker-compose.prod.yml build backend
+	@echo ""
+	@echo "📦 Building frontend production image..."
+	@docker build -t invoicing-frontend-prod invoicing-frontend/
+	@echo ""
+	@echo "✅ Production images built successfully!"
+	@echo ""
+	@echo "🚀 Next steps:"
+	@echo "  - Test: make deploy-test"
+	@echo "  - Staging: make deploy-staging"
+	@echo "  - Production: make deploy-prod"
+
+# Build frontend production image only
+build-frontend:
+	@echo "🏗️  Building frontend production image..."
+	@docker build -t invoicing-frontend-prod invoicing-frontend/
+	@echo "✅ Frontend production image built"
+	@echo ""
+	@echo "💡 Test locally:"
+	@echo "  docker run -d -p 8081:80 invoicing-frontend-prod"
+	@echo "  Then visit: http://localhost:8081"
+
+# Test frontend production build locally
+frontend-test:
+	@echo "🧪 Testing frontend production build..."
+	@echo ""
+	@echo "📦 Building production image..."
+	@cd invoicing-frontend && pnpm build
+	@echo ""
+	@echo "🚀 Starting production container..."
+	@docker run -d --name frontend-test -p 8081:80 invoicing-frontend-prod
+	@echo ""
+	@echo "✅ Frontend running at http://localhost:8081"
+	@echo ""
+	@echo "🧹 To stop: docker stop frontend-test && docker rm frontend-test"
+
+# Deploy to test environment
+deploy-test:
+	@echo "🧪 Deploying to test environment..."
+	@echo ""
+	@echo "📦 Building images..."
+	@make build-prod
+	@echo ""
+	@echo "🚀 Starting test deployment..."
+	@docker compose -f docker-compose.prod.yml up -d
+	@echo ""
+	@echo "✅ Test deployment complete!"
+	@echo ""
+	@echo "📍 Test URLs:"
+	@echo "  Frontend: http://localhost:80"
+	@echo "  Backend:  http://localhost:8081"
+	@echo ""
+	@echo "💡 Monitor logs: docker compose -f docker-compose.prod.yml logs -f"
 
 # Deploy to staging
 deploy-staging:
+	@echo "🚀 Deploying to staging environment..."
+	@echo ""
+	@echo "⚠️  This will deploy to staging. Continue? (Ctrl+C to cancel)"
+	@read -p "Press Enter to continue..."
+	@echo ""
+	@echo "📦 Building staging images..."
+	@docker compose -f docker-compose.staging.yml build
+	@echo ""
 	@echo "🚀 Deploying to staging..."
 	@docker compose -f docker-compose.staging.yml up -d
-	@echo "✅ Deployed to staging"
+	@echo ""
+	@echo "✅ Deployed to staging!"
+	@echo ""
+	@echo "💡 Check status: docker compose -f docker-compose.staging.yml ps"
 
 # Deploy to production
 deploy-prod:
+	@echo "🚀 PRODUCTION DEPLOYMENT"
+	@echo ""
+	@echo "⚠️  ⚠️  ⚠️  WARNING ⚠️  ⚠️  ⚠️"
+	@echo "This will deploy to PRODUCTION environment!"
+	@echo ""
+	@echo "Pre-deployment checklist:"
+	@echo "  ✓ Tests passed?"
+	@echo "  ✓ Staging verified?"
+	@echo "  ✓ Database backup created?"
+	@echo "  ✓ Team notified?"
+	@echo ""
+	@read -p "Type 'DEPLOY' to continue: " confirm; \
+	if [ "$$confirm" != "DEPLOY" ]; then \
+		echo "❌ Deployment cancelled"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "📦 Building production images..."
+	@make build-prod
+	@echo ""
 	@echo "🚀 Deploying to production..."
-	@echo "⚠️  This will deploy to production. Are you sure? (Ctrl+C to cancel)"
-	@read -p "Press Enter to continue..."
 	@docker compose -f docker-compose.prod.yml up -d
-	@echo "✅ Deployed to production"
+	@echo ""
+	@echo "✅ Deployed to production!"
+	@echo ""
+	@echo "📊 Monitor deployment:"
+	@echo "  Logs:   docker compose -f docker-compose.prod.yml logs -f"
+	@echo "  Status: docker compose -f docker-compose.prod.yml ps"
+	@echo "  Health: curl http://your-domain.com/health"
 
 # =============================================================================
 # API TESTING & HEALTH CHECKS

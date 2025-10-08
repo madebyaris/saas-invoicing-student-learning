@@ -26,8 +26,8 @@ type Subscription struct {
 	OrganizationID       string             `json:"organization_id" gorm:"not null;index"`
 	PlanType             SubscriptionPlan   `json:"plan_type" gorm:"not null;default:free;index"`
 	Status               SubscriptionStatus `json:"status" gorm:"not null;default:active;index"`
-	PayPalSubscriptionID string             `json:"paypal_subscription_id" gorm:"size:255;index"`
-	PayPalPlanID         string             `json:"paypal_plan_id" gorm:"size:255"`
+	PayPalSubscriptionID string             `json:"paypal_subscription_id" gorm:"column:paypal_subscription_id;size:255;index"`
+	PayPalPlanID         string             `json:"paypal_plan_id" gorm:"column:paypal_plan_id;size:255"`
 	CurrentPeriodStart   *time.Time         `json:"current_period_start"`
 	CurrentPeriodEnd     *time.Time         `json:"current_period_end"`
 	TrialEnd             *time.Time         `json:"trial_end"`

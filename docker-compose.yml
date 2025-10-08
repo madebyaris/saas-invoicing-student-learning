@@ -94,25 +94,28 @@ services:
       - full
       - pgadmin
 
-  # React Frontend (placeholder for future implementation)
+  # React Frontend Development
   frontend:
-    build:
-      context: ./invoicing-frontend
-      dockerfile: Dockerfile
-      target: development
+    image: node:20-alpine
     container_name: invoicing-frontend
     restart: unless-stopped
+    working_dir: /app
     ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_URL=http://localhost:8080
+      - "3000:5173"  # Vite default port
     volumes:
       - ./invoicing-frontend:/app
       - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - CHOKIDAR_USEPOLLING=true
+    command: >
+      sh -c "corepack enable pnpm &&
+             pnpm install &&
+             pnpm dev --host 0.0.0.0 --port 5173"
     depends_on:
       - backend
     profiles:
-      - frontend
+      - dev
       - full
 
 volumes:

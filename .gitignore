@@ -205,7 +205,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # ============================================================================
-# Frontend (React/Vite) - For future implementation
+# Frontend (React/Vite) - Production Implementation
 # ============================================================================
 
 # Dependencies
@@ -216,10 +216,13 @@ invoicing-frontend/node_modules/
 # Production builds
 invoicing-frontend/dist/
 invoicing-frontend/build/
+invoicing-frontend/dist-ssr/
 
 # Environment variables
 invoicing-frontend/.env.local
 invoicing-frontend/.env.*.local
+invoicing-frontend/.env.production.local
+invoicing-frontend/.env.development.local
 
 # Logs
 npm-debug.log*
@@ -240,9 +243,23 @@ lerna-debug.log*
 
 # Testing
 invoicing-frontend/coverage/
+invoicing-frontend/test-results/
+invoicing-frontend/playwright-report/
 
 # Vite
 invoicing-frontend/.vite/
+invoicing-frontend/.vite-cache/
+
+# TypeScript
+invoicing-frontend/*.tsbuildinfo
+
+# Bundle analysis
+invoicing-frontend/bundle-analyzer-report.html
+invoicing-frontend/stats.json
+
+# Performance monitoring
+invoicing-frontend/lighthouse-results/
+invoicing-frontend/web-vitals-results/
 
 # ============================================================================
 # Testing & Coverage
@@ -330,6 +347,27 @@ perf-results/
 
 # Security scan results
 security-reports/
+
+# Frontend build artifacts and analysis
+invoicing-frontend/.next/
+invoicing-frontend/.turbo/
+invoicing-frontend/out/
+invoicing-frontend/.pnpm-store/
+.pnpm-store/
+
+# React/Vite specific
+invoicing-frontend/.eslintcache
+invoicing-frontend/.stylelintcache
+
+# Storybook
+invoicing-frontend/storybook-static/
+
+# Sentry
+invoicing-frontend/.sentryclirc
+
+# Local development databases
+invoicing-frontend/local.db
+invoicing-frontend/dev.db
 
 # ============================================================================
 # Miscellaneous

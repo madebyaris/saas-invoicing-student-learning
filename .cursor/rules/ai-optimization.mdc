@@ -11,12 +11,13 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 **Strengths**: Deep analysis, structured thinking, comprehensive documentation
 
 **Best Use Cases**:
-- **Complex Refactoring**: Large-scale architecture changes across [invoicing-backend/](mdc:invoicing-backend/)
-- **Code Reviews**: Comprehensive analysis of Go code quality and patterns
+- **Complex Refactoring**: Large-scale architecture changes across [invoicing-backend/](mdc:invoicing-backend/) and [invoicing-frontend/](mdc:invoicing-frontend/)
+- **Code Reviews**: Comprehensive analysis of Go and React code quality and patterns
 - **Database Design**: Schema optimization and migration strategies
 - **Documentation**: Technical specs, API documentation, and architecture decisions
-- **Security Analysis**: Vulnerability assessment and security best practices
-- **Performance Analysis**: Database query optimization and bottleneck identification
+- **Security Analysis**: Vulnerability assessment and security best practices (RBAC, JWT, CORS)
+- **Performance Analysis**: Database query optimization and React bundle optimization
+- **RBAC System**: Organization-based multi-tenancy and permission analysis
 
 **Optimal Prompts for Sonnet 4**:
 ```
@@ -24,6 +25,9 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 "Review the database schema and suggest normalization opportunities..."
 "Create comprehensive documentation for the authentication flow..."
 "Identify security vulnerabilities in the current API design..."
+"Analyze the RBAC middleware and organization context system..."
+"Review the React frontend architecture and component structure..."
+"Assess the multi-tenancy implementation and data isolation..."
 ```
 
 ### Grok 4 - The Innovator ⚡
@@ -36,6 +40,8 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 - **API Design**: RESTful endpoint patterns and innovative data structures
 - **Testing Strategies**: Creative test scenarios and edge cases
 - **DevOps Innovation**: Docker optimizations and deployment strategies
+- **Frontend Innovation**: React component patterns, TanStack Router optimization
+- **UI/UX Solutions**: shadcn/ui component customization and responsive design
 
 **Optimal Prompts for Grok 4**:
 ```
@@ -43,6 +49,10 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 "Create an innovative caching strategy for invoice data..."
 "Build a unique API rate limiting solution..."
 "Optimize Docker builds for maximum speed..."
+"Create a revolutionary React component for invoice management..."
+"Design an innovative real-time dashboard with live updates..."
+"Build a creative solution for multi-organization data isolation..."
+"Optimize TanStack Router for lightning-fast navigation..."
 ```
 
 ### Supernova - The Precision Expert 🎯
@@ -55,6 +65,9 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 - **Testing & QA**: Comprehensive test coverage and quality assurance
 - **Error Handling**: Robust error management and recovery strategies
 - **Monitoring & Observability**: Logging, metrics, and alerting systems
+- **RBAC Implementation**: Precise permission checking and organization context
+- **React Forms**: Production-ready form validation with React Hook Form + Zod
+- **API Integration**: Bulletproof Axios interceptors and error handling
 
 **Optimal Prompts for Supernova**:
 ```
@@ -62,6 +75,10 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 "Create comprehensive test suite for invoice creation flow..."
 "Build robust error handling for database transactions..."
 "Design monitoring system for invoice processing pipeline..."
+"Implement bulletproof RBAC middleware with organization context..."
+"Create production-ready React forms with Zod validation..."
+"Build robust Axios interceptors with automatic token refresh..."
+"Implement comprehensive error boundaries for React components..."
 ```
 
 ## 🎯 Context-Aware AI Interaction
@@ -72,16 +89,25 @@ description: "AI Model Optimization for Sonnet 4, Grok 4, and Supernova"
 
 ```
 Project: SaaS Invoicing System
-Tech Stack: Go 1.25 + PostgreSQL 18 + Docker + GORM
-Architecture: Clean Monolith with layered services
+Tech Stack: Go 1.25 + PostgreSQL 18 + Docker + GORM + React 19 + TanStack Router + shadcn/ui
+Architecture: Clean Monolith with layered services + Modern React SPA
 Key Files: 
-- API: /docs/api-reference.md
-- Models: /invoicing-backend/internal/models/
-- Services: /invoicing-backend/internal/services/
-- Database: /invoicing-backend/migrations/
-- Docker: /docker-compose.yml, /Makefile
+- Backend API: [invoicing-backend/internal/handlers/](mdc:invoicing-backend/internal/handlers/)
+- Frontend Pages: [invoicing-frontend/src/app/](mdc:invoicing-frontend/src/app/)
+- Database Models: [invoicing-backend/internal/models/](mdc:invoicing-backend/internal/models/)
+- Services: [invoicing-backend/internal/services/](mdc:invoicing-backend/internal/services/)
+- API Docs: [docs/api-reference.md](mdc:docs/api-reference.md)
+- Docker: [docker-compose.yml](mdc:docker-compose.yml), [Makefile](mdc:Makefile)
 Current Status: [Brief description of what you're working on]
 ```
+
+**Recent Achievements**:
+- ✅ Fixed 403 authentication errors with comprehensive RBAC system
+- ✅ Implemented organization-based multi-tenancy
+- ✅ Built complete frontend with React 19 + TanStack Router
+- ✅ Integrated shadcn/ui components for professional UI
+- ✅ Full CRUD operations for clients and invoices
+- ✅ Dashboard with live API data integration
 
 ### Intelligent Task Routing
 
@@ -249,11 +275,31 @@ Please provide: refactored code + migration plan + tests"
 ```
 Working on: Invoice creation API endpoint
 Files involved: 
-- /invoicing-backend/internal/handlers/invoice.go
-- /invoicing-backend/internal/services/invoice.go  
-- /invoicing-backend/internal/models/invoice.go
+- [invoicing-backend/internal/handlers/invoice.go](mdc:invoicing-backend/internal/handlers/invoice.go)
+- [invoicing-backend/internal/services/invoice.go](mdc:invoicing-backend/internal/services/invoice.go)
+- [invoicing-backend/internal/models/invoice.go](mdc:invoicing-backend/internal/models/invoice.go)
+- [invoicing-frontend/src/app/invoices.tsx](mdc:invoicing-frontend/src/app/invoices.tsx)
 Current issue: [describe specific problem]
 Business requirement: [explain what needs to be achieved]
 Technical constraints: [list any limitations]
 Performance target: [specify requirements]
+RBAC context: [organization permissions, user role]
 ```
+
+### Real-World Examples from Recent Work
+
+**403 Error Fix (Sonnet 4 Analysis)**:
+- **Problem**: Users getting 403 errors on all protected endpoints
+- **Root Cause**: Missing organization membership in RBAC system
+- **Solution**: Enhanced registration service + migration script
+- **Files**: [invoicing-backend/internal/services/auth.go](mdc:invoicing-backend/internal/services/auth.go), [invoicing-backend/internal/middleware/rbac.go](mdc:invoicing-backend/internal/middleware/rbac.go)
+
+**Frontend Implementation (Grok 4 Innovation)**:
+- **Challenge**: Build complete React SPA with modern tooling
+- **Solution**: React 19 + TanStack Router + shadcn/ui + Tailwind CSS 4
+- **Files**: [invoicing-frontend/src/app/](mdc:invoicing-frontend/src/app/), [invoicing-frontend/src/components/](mdc:invoicing-frontend/src/components/)
+
+**Production RBAC (Supernova Precision)**:
+- **Requirement**: Bulletproof multi-tenant security
+- **Implementation**: Organization context + role permissions + subscription limits
+- **Files**: [invoicing-backend/internal/middleware/rbac.go](mdc:invoicing-backend/internal/middleware/rbac.go), [invoicing-backend/internal/models/role.go](mdc:invoicing-backend/internal/models/role.go)

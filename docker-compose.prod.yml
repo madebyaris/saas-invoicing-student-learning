@@ -2,47 +2,61 @@ version: '3.8'
 
 services:
   postgres:
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_secure_prod_password}
-    volumes:
-      - /opt/invoicing/postgres:/var/lib/postgresql/data
+    image: postgres:18-alpine
+    container_name: invoicing-postgres-prod
     restart: always
-    networks:
-      - invoicing-network
+    environment:
+      POSTGRES_DB: invoicing_prod
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-prodpassword}
+    ports:
+      - "5433:5432"  # Different port for prod
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./invoicing-backend/migrations:/migrations
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d invoicing_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
-    image: your-registry/invoicing-backend:latest
+    build:
+      context: ./invoicing-backend
+      dockerfile: Dockerfile
+      target: production  # Assume prod target in Dockerfile
+    container_name: invoicing-backend-prod
+    restart: always
+    ports:
+      - "8081:8080"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgres://postgres:${DB_PASSWORD:-prodpassword}@postgres:5432/invoicing_prod?sslmode=disable
+      - JWT_SECRET=${JWT_SECRET:-prod-jwt-secret-super-long-random}
       - PORT=8080
       - GIN_MODE=release
-    restart: always
-    networks:
-      - invoicing-network
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./invoicing-backend:/app:ro  # Read-only for prod
 
-  nginx:
-    image: nginx:alpine
-    container_name: invoicing-nginx
+  frontend:
+    build:
+      context: ./invoicing-frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: invoicing-frontend-prod
+    restart: always
     ports:
       - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - "443:443"  # For HTTPS in prod
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-https://api.example.com}
     depends_on:
       - backend
-    restart: always
-    networks:
-      - invoicing-network
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro  # For certs if needed
 
-networks:
-  invoicing-network:
-    driver: bridge
+volumes:
+  postgres_prod_data:
